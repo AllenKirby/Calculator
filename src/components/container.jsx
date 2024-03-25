@@ -7,57 +7,41 @@ import History from './history'
 const Container = () => {
   const [equation, setEquation] = useState('');
   const [startedTyping, setStartedTyping] = useState(false);
-  const [result, setResult] = useState('');
   const [toHistory, setToHistory] = useState([])
   const lastResult = useRef(null);
+  const [IsNegative, setIsNegative] = useState(false)
 
 
   const getEquation = (input) => {
-    if(result){
-      setEquation(lastResult.current.value + input)
-      setResult('')
-    }
-    else{
-      setEquation(prevEquation => {
-        const lastCharacterIsOperator = ['+', '-', 'x', '÷', '.'].includes(prevEquation.slice(-1));
-        const isOperator = ['+', '-', 'x', '÷', '.'].includes(input);
+    setEquation(prevEquation => {
 
-        if(!startedTyping && prevEquation === '0'){
-          if(input === '.'){
-            return '0.';
-          } 
-          else if (isOperator || input === '0'){
-            return 0;
-          }
-          else{
-            return input;
-          }
+      const lastCharacterIsOperator = ['+', '-', 'x', '÷', '.'].includes(prevEquation.slice(-1));
+      const isOperator = ['+', '-', 'x', '÷', '.'].includes(input);
+
+      if(!startedTyping && prevEquation === '0'){
+        if(input === '.'){
+          return '0.';
+        } 
+        else if (isOperator || input === '0'){
+          return 0;
         }
-        else if(lastCharacterIsOperator && isOperator){
-          return prevEquation.slice(0, -1) + input;
+        else{
+          return input;
         }
-        else if (input === '√') {
-          const number = prevEquation;
-          const squared = Math.sqrt(parseFloat(prevEquation)); 
-          const resultSquared = `√${number} = ${squared}`;
-          console.log(resultSquared);
-          console.log(...toHistory)
-          if (!toHistory.includes(resultSquared)) {
-            setToHistory(prevToHistory => [...prevToHistory, resultSquared]);
-          }
-          return squared.toString();
-        }
-        return prevEquation + input;
-      });
-      setStartedTyping(true);
-    }
+      }
+      else if(lastCharacterIsOperator && isOperator){
+        return prevEquation.slice(0, -1) + input;
+      }
+      return prevEquation.toString() + input.toString();
+    });
+    setStartedTyping(true);
   };
 
   const squared = () =>{
     if (!isNaN(Number(equation))) {
       const eq = equation;
       const squared = Math.pow(eq, 2)
-      setEquation(squared);
+      setEquation(squared.toString());
       const result = `${eq}^2 = ${squared}`;
       setToHistory(prevToHistory => [...prevToHistory, result]);
     }
@@ -67,7 +51,7 @@ const Container = () => {
     if (!isNaN(Number(equation))) {
       const eq = equation;
       const percentage = parseFloat(eq) / 100;
-      setEquation(percentage);
+      setEquation(percentage.toString());
       const result = `${eq} = ${percentage}%`;
       setToHistory(prevToHistory => [...prevToHistory, result]);
     }
@@ -77,37 +61,51 @@ const Container = () => {
     if (!isNaN(Number(equation))) {
       const eq = equation;
       const squareRoot = Math.sqrt(parseFloat(eq));
-      setEquation(squareRoot);
+      setEquation(squareRoot.toString());
       const result = `√${eq} = ${squareRoot}`;
       setToHistory(prevToHistory => [...prevToHistory, result]);
     }
   }
 
   const positiveNegative = () => {
-    let numbers = '';
-    let eq = ''
-    if (!isNaN(Number(equation))) {
-      setEquation(`(-${equation})`);
-    }
-    else{
-      for (let i = equation.length - 1; i >= 0; i--) {
-        if (equation[i] === '+' || equation[i] === '-' || equation[i] === 'x' || equation[i] === '÷') {
+    if (!IsNegative) {
+      if (!isNaN(Number(equation)) && equation.slice(-1) !== '0') {
+        setEquation(`(-${equation})`);
+        setIsNegative(true)
+      } else {
+        let numbers = '';
+        let eq = '';
+  
+        for (let i = equation.length - 1; i >= 0; i--) {
+          if ('+-x÷'.includes(equation[i])) {
             if (i > 0) {
-                numbers = equation.slice(i + 1);
-                if (equation.includes(numbers)) {
-                  eq = equation.replace(numbers, '');
-              }
-            } 
-            else{
+              numbers = equation.slice(i + 1);
+              eq = equation.slice(0, i + 1);
+            } else {
               numbers = equation;
             }
-            break; 
+            break;
+          }
         }
+        setEquation(eq + (numbers !== '' ? `(-${numbers})` : ''));
+        setIsNegative(true)
+      }
+    } else {
+      let numbers = '';
+      let eq = '';
+  
+      for (let i = equation.length - 1; i >= 0; i--) {
+        if (equation[i] === '-' && equation[i - 1] === '(') {
+          numbers = equation.slice(i + 1).replace(')', '');
+          eq = equation.slice(0, i - 1);
+          setEquation(eq + numbers);
+          break;
+        }
+      }
+      setIsNegative(false)
     }
-    console.log(numbers + '=' + eq);
-    setEquation(eq + (numbers !== '' ? `(-${numbers})`: ''))
-    }
-  }
+  };
+  
 
   useEffect(()=>{
     if(equation == ''){
@@ -116,19 +114,25 @@ const Container = () => {
     }
   }, [equation])
 
+  useEffect(()=>{
+    if(positiveNegative && '+-x÷'.includes(equation.slice(-1))){
+      setIsNegative(false);
+    }
+  }, [equation])
   
 
   const calculateEquation = () =>{
     try{
-      const finalEquation = equation.replace(/x/g, '*').replace(/÷/g, '/');
+      const eq =  equation;
+      const finalEquation = eq.replace(/x/g, '*').replace(/÷/g, '/');
       const newResult = eval(finalEquation);
       if(newResult === 0){
-        setEquation('0');
+        setEquation('');
       }
       else{
-        setResult(newResult);
+        setEquation(newResult.toString())
       }
-      const newHistory = `${equation} = ${newResult}`;
+      const newHistory = `${eq} = ${newResult}`;
       setToHistory(prevToHistory => [...prevToHistory, newHistory]);
     }
     catch(error){
@@ -145,11 +149,11 @@ const Container = () => {
             <History fullResult={toHistory} />
           </header>
           <div className="py-7 flex items-center justify-end">
-            <input disabled ref={lastResult} className={`w-72 h-auto bg-transparent text-white font-bold text-right overflow-auto ${equation && equation.length >= 10 || result && result.length >=10 ? 'text-3xl' : 'text-5xl'}`} value={result ? result: equation}/>
+            <input disabled ref={lastResult} className={`w-72 h-auto bg-transparent text-white font-bold text-right overflow-auto ${equation && equation.length >=10 ? 'text-3xl' : 'text-5xl'}`} value={equation}/>
           </div>
         </section>
         <section className="w-full h-auto p-7 rounded-2xl grid grid-cols-4 grid-rows-5 gap-y-4 gap-x-5">
-          <button onClick={()=> {setEquation(''); setResult('');}} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-stone-500 text-3xl font-bold hover:scale-125 transition-all duration-300">C</button>
+          <button onClick={()=> {setEquation(''); setIsNegative(true); }} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-stone-500 text-3xl font-bold hover:scale-125 transition-all duration-300">C</button>
           <button onClick={()=> setEquation(prevEquation => prevEquation.slice(0, -1))} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-white text-3xl flex items-center justify-center hover:scale-125 transition-all duration-300 "><RiDeleteBack2Line color="rgb(115 115 115)" /></button>
           <button onClick={()=> getEquation('(')} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-stone-500 text-3xl font-bold hover:scale-125 transition-all duration-300">(</button>
           <button onClick={()=> getEquation(')')} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-stone-500 text-3xl font-bold hover:scale-125 transition-all duration-300">)</button>
