@@ -105,6 +105,16 @@ const Container = () => {
       setIsNegative(false)
     }
   };
+
+  const deleteLastCharacter = ()=>{
+    setEquation(prevEquation => {
+      if(!IsNegative && '+-x÷'.includes(prevEquation.slice(-1))){
+        setIsNegative(true);
+        return prevEquation.slice(0, -1);
+      }
+      return prevEquation.slice(0, -1)
+    })
+  }
   
 
   useEffect(()=>{
@@ -153,8 +163,8 @@ const Container = () => {
           </div>
         </section>
         <section className="w-full h-auto p-7 rounded-2xl grid grid-cols-4 grid-rows-5 gap-y-4 gap-x-5">
-          <button onClick={()=> {setEquation(''); setIsNegative(true); }} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-stone-500 text-3xl font-bold hover:scale-125 transition-all duration-300">C</button>
-          <button onClick={()=> setEquation(prevEquation => prevEquation.slice(0, -1))} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-white text-3xl flex items-center justify-center hover:scale-125 transition-all duration-300 "><RiDeleteBack2Line color="rgb(115 115 115)" /></button>
+          <button onClick={()=> {setEquation(''); setIsNegative(false); }} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-stone-500 text-3xl font-bold hover:scale-125 transition-all duration-300">C</button>
+          <button onClick={deleteLastCharacter} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-white text-3xl flex items-center justify-center hover:scale-125 transition-all duration-300 "><RiDeleteBack2Line color="rgb(115 115 115)" /></button>
           <button onClick={()=> getEquation('(')} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-stone-500 text-3xl font-bold hover:scale-125 transition-all duration-300">(</button>
           <button onClick={()=> getEquation(')')} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-stone-500 text-3xl font-bold hover:scale-125 transition-all duration-300">)</button>
           <button onClick={positiveNegative} className="w-16 h-16 shadow-md shadow-stone-500 rounded-lg text-stone-500 text-2xl font-bold hover:scale-125 transition-all duration-300">+/-</button>
